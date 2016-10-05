@@ -4,7 +4,7 @@ try:  # использовать setuptools для установки завис
 	import romanclass
 except ImportError:
 	import subprocess
-	subprocess.call('pip install romanclass')
+	subprocess.call('pip install romanclass', shell=True)
 	import romanclass
 
 # ============================================================================
@@ -21,10 +21,16 @@ def transition():
 
 
 def bullet_list(elements, level=0):
-	return '\n\n'.join(['  ' * level + '- ' + i.replace('\n', '\n  ') for i in elements]) + '\n\n'
+	return '\n'.join(['  ' * level + '- ' + i.replace('\n', '\n  ') for i in elements]) + '\n\n'
 
 
 def enumerated_list(elements, start=1, style='arabic', formatting='.'):  # не сработает, если (N)
+	"""
+:param elements: итерируемая последовательность, объект преобразования
+:param start: начальная позиция; по умолчанию - первый пункт
+:param style: стиль перечисления; по умолчанию - арабские цифры
+:param formatting: символ отделения перечислителя от строки; по умолчанию - точка
+"""
 	first = '#'
 	if start == 1:
 		if style == 'alpha_low':
@@ -50,6 +56,13 @@ def enumerated_list(elements, start=1, style='arabic', formatting='.'):  # не 
 
 	return '\n'.join(['%s%s %s' % (counter, formatting, text.replace('\n', '\n' + ' ' * (len(str(counter)) + 2)))
 						for counter, text in zip((first, second, *tuple('#' * (len(elements) - 2))), elements)]) + '\n\n'
+
+
+def field_list(elements):
+	"""
+:param elements: последовательность пар имя-описание
+"""
+	return '\n'.join([':%s: %s' % (name, body.replace('\n', '\n\t')) for name, body in elements])
 
 
 def header(text, level):
@@ -90,22 +103,17 @@ def sourcecode(text, strlimit=None):
 	return '::\n\n\t%s\n\n' % text.replace('\n', '\n\t')
 
 
-'''
-def paragraph(text, level=0):
-	return
-'''
-
 # ============================================================================
 # Inline Markup
 # ============================================================================
 
 
-def bold(text):
+def strong(text):
 	return '**%s**' % text
 
 
-def italic(text):
+def emphasis(text):
 	return '*%s*' % text
 
 
-print(enumerated_list(['def sourcecode(text, strlimit=None):\n\ndef italic(text):', 'xxx']))
+# print(enumerated_list(['def sourcecode(text, strlimit=None):\n\ndef italic(text):', 'xxx']))
