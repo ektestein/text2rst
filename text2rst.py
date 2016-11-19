@@ -1,3 +1,4 @@
+import re
 from string import ascii_uppercase, ascii_lowercase
 
 try:  # использовать setuptools для установки зависимостей при оформлении в пакет
@@ -7,13 +8,15 @@ except ImportError:
 	subprocess.call('pip install romanclass', shell=True)
 	import romanclass
 
+import prettytable
+
 # ============================================================================
 # Document Structure
 # ============================================================================
 
 
 def transition():
-	return '\n%s\n\n' % '-' * 8
+	return '\n%s\n\n' % ('-' * 80)
 
 # ============================================================================
 # Body Elements
@@ -54,8 +57,10 @@ def enumerated_list(elements, start=1, style='arabic', formatting='.'):  # не 
 			if style == 'roman_low':
 				second = second.lower()
 
-	return '\n'.join(['%s%s %s' % (counter, formatting, text.replace('\n', '\n' + ' ' * (len(str(counter)) + 2)))
-						for counter, text in zip((first, second, *tuple('#' * (len(elements) - 2))), elements)]) + '\n\n'
+	return '\n'.join([
+				'%s%s %s' % (counter, formatting, text.replace('\n', '\n' + ' ' * (len(str(counter)) + 2)))
+				for counter, text in zip((first, second, *tuple('#' * (len(elements) - 2))), elements)]) \
+		+ '\n\n'
 
 
 def field_list(elements):
@@ -65,6 +70,24 @@ def field_list(elements):
 	return '\n'.join([':%s: %s' % (name, body.replace('\n', '\n\t')) for name, body in elements])
 
 
+def grid_table(body, headers=None):
+	"""
+создает ascii-подобную таблицу с опциональным заголовком. пока не поддерживает объединение ячеек.
+:param body: двумерная последовательность, где внешний уровень - набор последовательностей,
+	внутренний - содержимое ячеек. например:
+	``(('q', 'w', 'e'), ('r', 't', 'y'))``
+:param headers: последовательность с заголовками, по умолчанию - нет
+:return:
+"""
+	table = prettytable.PrettyTable(header=True if headers else False, hrules=prettytable.ALL)
+	if headers:
+		table.field_names = headers
+	for row in body:
+		table.add_row(row)
+	out_table = table.get_string()
+	return re.sub('\|\n(\+-{3,})+\+\n\|', lambda s: s.group(0).replace('-', '='), out_table, 1) if headers else out_table
+
+
 def header(text, level):
 	"""
 :param text: строка, над которой совершается преобразование
@@ -72,6 +95,16 @@ def header(text, level):
 """
 	symbols = '=-\'.:"'
 	return '%s\n%s\n\n' % (text, symbols[level] * len(text))
+
+
+def paragraph(text, level=0):
+	"""
+
+:param text: строка, над которой совершается преобразование
+:param level: уровень абзаца
+:return:
+"""
+	return ''.join(('\t' * level + i + '\n' for i in text.splitlines())) + '\n'
 
 
 def sourcecode(text, strlimit=None):
@@ -107,13 +140,24 @@ def sourcecode(text, strlimit=None):
 # Inline Markup
 # ============================================================================
 
+def emphasis(text):
+	return '*%s*' % text
+
+
+def internal_link_jump(name, link):  # мб переписать. обозначить цели
+	return '`%s <#%s>`_' % (name, link)
+
+
+def internal_link_label(text):
+	return '.. _%s:\n\n' % text
+
 
 def strong(text):
 	return '**%s**' % text
 
 
-def emphasis(text):
-	return '*%s*' % text
-
-
-# print(enumerated_list(['def sourcecode(text, strlimit=None):\n\ndef italic(text):', 'xxx']))
+if __name__ == '__main__':
+	# print(enumerated_list(['def sourcecode(text, strlimit=None):\n\ndef italic(text):', 'xxx']))
+	hs = ('h1', 'h2', 'h3')
+	bo = (('q', 'w', 'e'), ('r', 't', 'y'))
+	print(grid_table(bo, hs))
